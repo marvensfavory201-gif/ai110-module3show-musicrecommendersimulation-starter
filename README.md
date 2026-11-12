@@ -2,11 +2,9 @@
 
 ## Project Summary
 
-This project is a simple music recommender that suggests songs from `songs.csv` based on a user's favorite style and mood. It scores every song by how closely it matches what the listener likes, then picks the top results.
+This project is a simple music recommender that suggests songs from `songs.csv` based on a user's favorite style, mood, and energy level. It scores every song by how closely it matches what the listener likes, then picks the top results.
 
 ---
-
-## How The System Works
 
 ## How The System Works
 
@@ -20,29 +18,15 @@ Real-world apps like Spotify recommend music by looking at both **what other peo
   * **Audio Numbers:** `energy`, `valence` (happiness), `acousticness`, `danceability`, and `tempo_bpm`
 
 * **`UserProfile` Features:**
-  * **Favorites:** `favorite_genre` and `favorite_mood`
-  * **Target Sound:** `target_energy`, `target_valence`, and `target_acousticness`
-
-### How Songs Are Chosen
-
-1. **Scoring:** Each song gets points out of 100. It gets bonus points if the `mood` (+30) or `genre` (+20) matches. It also gets points based on how close its `energy`, `valence`, and `acousticness` numbers are to the user's preferences.
-2. **Ranking:** The system removes songs the user already liked, sorts the rest from highest score to lowest score, and recommends the **Top 3** songs.
-
+  * **Favorites:** `genre` and `mood`
+  * **Target Sound:** `energy` (plus optional `valence` and `acousticness`)
 
 ### Algorithm Recipe (Scoring & Ranking)
 
-1. **Genre Match (`+2.0` points):** Adds `2.0` points if the song's `genre` matches `favorite_genre`.
-2. **Mood Match (`+1.0` point):** Adds `1.0` point if the song's `mood` matches `favorite_mood`.
-3. **Sound Similarity (up to `+3.0` points total):** Adds up to `1.0` point each for how close `energy`, `valence`, and `acousticness` are to the user's targets using `1 - abs(target - song_value)`.
-4. **Ranking:** Sorts all songs from highest score (`6.0` max) to lowest score and recommends the **Top 3** matches.
-
-### Potential Biases
-
-* **Genre Tunnel Vision:** Because a `genre` match (`+2.0`) is worth twice as much as a `mood` match (`+1.0`), the system might trap the listener in one style and skip great songs in other genres that fit the exact same mood.
-* **Small Catalog Bias:** With only 18 songs in `songs.csv`, genres with multiple tracks (like `lofi` or `pop`) have a higher chance of filling the top 3 spots compared to genres with only one track.
-
-
-
+1. **Genre Match:** Adds points if the song's `genre` matches the user's favorite genre (`+2.0` initially, later tested at `+1.0`).
+2. **Mood Match:** Adds `+1.0` point if the song's `mood` matches the user's favorite mood.
+3. **Sound Similarity:** Adds points based on how close `energy` is to the user's target using `1 - abs(target - song_value)` (later doubled to `2.0x` weight).
+4. **Ranking:** Sorts all songs from highest score to lowest score and recommends the **Top 5** matches.
 
 ---
 
@@ -56,18 +40,19 @@ Real-world apps like Spotify recommend music by looking at both **what other peo
    python -m venv .venv
    source .venv/bin/activate      # Mac or Linux
    .venv\Scripts\activate         # Windows
+   ```
 
-2. Install dependencies
+2. Install dependencies:
 
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 3. Run the app:
 
-```bash
-python -m src.main
-```
+   ```bash
+   python -m src.main
+   ```
 
 ### Running Tests
 
@@ -77,63 +62,56 @@ Run the starter tests with:
 pytest
 ```
 
-You can add more tests in `tests/test_recommender.py`.
-
 ---
 
 ## Sample Recommendation Output
 
 ```text
-Top 5 Recommendations:
+============================================================
+PROFILE: 1. High-Energy Pop
+Preferences: {'genre': 'pop', 'mood': 'happy', 'energy': 0.85}
+============================================================
+1. Sunrise City by Neon Echo (Score: 3.97)
+   Reasons: genre match: pop (+2.0), mood match: happy (+1.0), energy closeness (+0.97)
+2. Gym Hero by Max Pulse (Score: 2.92)
+   Reasons: genre match: pop (+2.0), energy closeness (+0.92)
+3. Rooftop Lights by Indigo Parade (Score: 1.91)
+   Reasons: mood match: happy (+1.0), energy closeness (+0.91)
+4. City Hustle by Metro Flow (Score: 1.00)
+   Reasons: energy closeness (+1.00)
+5. Neon Horizon by Pulsewave (Score: 0.96)
+   Reasons: energy closeness (+0.96)
 
-1. Sunrise City by Neon Echo
-   Score:   3.98 / 4.00
-   Reasons: genre match: pop (+2.0), mood match: happy (+1.0), energy closeness (+0.98)
--------------------------------------------------------
-2. Gym Hero by Max Pulse
-   Score:   2.87 / 4.00
-   Reasons: genre match: pop (+2.0), energy closeness (+0.87)
--------------------------------------------------------
-3. Rooftop Lights by Indigo Parade
-   Score:   1.96 / 4.00
-   Reasons: mood match: happy (+1.0), energy closeness (+0.96)
--------------------------------------------------------
-4. City Hustle by Metro Flow
-   Score:   0.95 / 4.00
-   Reasons: energy closeness (+0.95)
--------------------------------------------------------
-5. Night Drive Loop by Neon Echo
-   Score:   0.95 / 4.00
-   Reasons: energy closeness (+0.95)
--------------------------------------------------------
+============================================================
+PROFILE: 5. Edge Case - Unknown Genre
+Preferences: {'genre': 'opera', 'mood': 'peaceful', 'energy': 0.2}
+============================================================
+1. Moonlight Sonata by Clara Keys (Score: 1.95)
+   Reasons: mood match: peaceful (+1.0), energy closeness (+0.95)
+2. Spacewalk Thoughts by Orbit Bloom (Score: 0.92)
+   Reasons: energy closeness (+0.92)
+3. Pine Trail by Willow Creek (Score: 0.88)
+   Reasons: energy closeness (+0.88)
+4. Library Rain by Paper Lanterns (Score: 0.85)
+   Reasons: energy closeness (+0.85)
+5. Coffee Shop Stories by Slow Stereo (Score: 0.83)
+   Reasons: energy closeness (+0.83)
 ```
-
-
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or demo video link here -->
 
 ---
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
-
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+* **Weight Shift (Halving Genre, Doubling Energy):** When `genre` was worth `+2.0` points, the intense workout track *Gym Hero* (`pop`, `intense`) ranked #2 for a **Happy Pop** listener even though its mood did not match. When I cut the `genre` bonus to `+1.0` and doubled the `energy` weight, the recommendations became much better at matching the right vibe across different genres.
+* **Diverse & Adversarial User Profiles:** I tested standard listeners (**High-Energy Pop**, **Chill Lofi Study**, **Deep Intense Rock**) alongside edge cases like an **Unknown Genre** (`opera`). Even when `opera` was missing from the catalog, the system safely fell back on mood and low energy to recommend *Moonlight Sonata* (`classical`, `peaceful`).
 
 ---
 
 ## Limitations and Risks
 
-Summarize some limitations of your recommender.
-
-Examples:
-
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
-
-You will go deeper on this in your model card.
+* **Tiny & Uneven Catalog:** With only 18 songs in `songs.csv`, genres with multiple tracks (like `lofi` and `pop`) fill out top-5 playlists easily, while single-song genres (like `rock` or `classical`) force the system to pad results with unrelated styles.
+* **Genre Filter Bubble:** Giving too much weight to exact genre labels can hide great songs from neighboring genres that fit the listener's mood better.
+* **Missing Context:** The system does not consider lyrics, language, tempo, or whether the user has already heard a song.
 
 ---
 
@@ -143,10 +121,7 @@ Read and complete `model_card.md`:
 
 [**Model Card**](model_card.md)
 
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
-
-
-
+* **Biggest Learning Moment:** My biggest learning moment was seeing how much a single scoring weight can change the final playlist. When genre was worth twice as much as mood, the system pushed intense workout songs into a "Happy Pop" playlist just because the genre label matched.
+* **Working with AI Tools:** Using AI helped me quickly write the CSV loader, test edge cases, and shift my scoring weights. However, I still had to double-check the math and terminal outputs myself, such as making sure the sorting rule ranked by numeric score and verifying that my weight changes kept the total score balanced.
+* **What Surprised Me:** I was surprised by how smart a simple math formula can "feel" to a listener. Even with just 18 songs and basic subtraction, the recommender still picked fitting classical music when a user asked for `opera`, a genre not in the catalog.
+* **What I Would Try Next:** If I extended this project, I would add a "skip" or "already heard" filter so users never get repeated songs, and I would include `tempo_bpm` and `danceability` in the default score.
